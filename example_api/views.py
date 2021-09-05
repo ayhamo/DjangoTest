@@ -1,5 +1,5 @@
 from rest_framework import generics
-from example.models import Post
+from .models import Post
 from .serializer import PostSerializer
 
 
