@@ -29,8 +29,6 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'example_api',
-    'CourseApp',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -38,6 +36,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'example_api',
+    'CourseApp',
 ]
 
 MIDDLEWARE = [
@@ -79,12 +79,14 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'djnagotest',
         'HOST': 'localhost',
-        'USER': 'dbadmin',
-        'PASSWORD': '12345',
+        'USER': 'root',
+        'PASSWORD': '1234',
         'PORT': '3306',
-        
-
-    }
+        'OPTIONS': {  # Recommended by django-mysql
+            'init_command': 'SET innodb_strict_mode=1;SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci',
+            'charset': 'utf8mb4',
+        },
+    },
 }
 
 # Password validation
