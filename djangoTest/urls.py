@@ -19,6 +19,7 @@ from django.views.generic import TemplateView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', TemplateView.as_view(template_name="example/index.html")),
-    path('', include('example_api.urls', namespace='example_api'))
+    path('', TemplateView.as_view(template_name="default.html")),
+    path('app/', include('CourseApp.urls', namespace='CourseApp')),  # so localhost/app/etc..
+    # path('test/', include('example_api.urls', namespace='example_api'))
 ]

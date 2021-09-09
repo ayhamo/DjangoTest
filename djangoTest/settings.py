@@ -30,6 +30,7 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     'example_api',
+    'CourseApp',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
