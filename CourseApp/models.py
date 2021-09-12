@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AbstractUser
 
 """ID's are always generated auto as PK if no PK is specified"""
 """all FK's references in database add X_id as default"""
@@ -64,32 +64,50 @@ class UserSegment(models.Model):
         return self.name
 
 
-class user(models.Model):
-    user = models.OneToOneField(User, on_delete=models.PROTECT)
+class User(AbstractUser):
+    GENDER_CHOICES = [(0, 'Male'), (1, 'Female')]
+    username = None
+    password = None
+    first_name = models.CharField(max_length=50),
+    second_name = models.CharField(max_length=50),
+    last_name = models.CharField(max_length=50),
+    gender = models.IntegerField(choices=GENDER_CHOICES)
+    age_group = models.CharField(max_length=50)
+    token = models.CharField(max_length=15),
+    level = models.IntegerField(),
+    source = models.CharField(max_length=50),
+    info_complete = models.BooleanField(default=False),
+    phone = models.CharField(max_length=20),
     segment = models.ForeignKey(UserSegment, on_delete=models.PROTECT)
+    USERNAME_FIELD = phone
+    REQUIRED_FIELDS = [phone]
 
     def __str__(self):
-        return self.user.username
+        return f'{self.first_name} {self.last_name}, {self.gender} with age group: {self.age_group}, has phone: {self.phone} and his info is' \
+               f'{"not" if self.info_complete == False else ""} completed'
 
 
 class Comment(models.Model):
     date = models.DateTimeField(auto_now_add=True)
     text = models.TextField()
+    user = models.ForeignKey(User, on_delete=models.PROTECT)
+    course = models.ForeignKey(Course, on_delete=models.PROTECT)
 
     def __str__(self):
-        return f'At {self.date} with text: {self.text} and thats it'
+        return f'user id: {self.user} made comment At {self.date} with text: {self.text} ' \
+               f'on the course with id: {self.course}'
 
 
 class Payment(models.Model):
     amount = models.FloatField()
-    user = models.ForeignKey(user, on_delete=models.PROTECT)
+    user = models.ForeignKey(User, on_delete=models.PROTECT)
 
     def __str__(self):
         return self.amount
 
 
 class UserJoinsCourse(models.Model):
-    user = models.ForeignKey(user, on_delete=models.PROTECT)
+    user = models.ForeignKey(User, on_delete=models.PROTECT)
     course = models.ForeignKey(Course, on_delete=models.PROTECT)
     payment = models.ForeignKey(Payment, on_delete=models.PROTECT)
     last_unlocked = models.DateTimeField(auto_now_add=True)
@@ -135,19 +153,6 @@ class Survey(models.Model):
         return self.count
 
 
-class UserCommentedOnCourse(models.Model):
-    user = models.ForeignKey(user, on_delete=models.PROTECT)
-    comment = models.ForeignKey(Comment, on_delete=models.PROTECT)
-    course = models.ForeignKey(Course, on_delete=models.PROTECT)
-
-    class Meta:
-        unique_together = (('user', 'comment', "course"),)
-
-    def __str__(self):
-        return f'user id: {self.user} made a comment with id {self.comment}' \
-               f'on the course with id: {self.course}'
-
-
 class Exam(models.Model):
     num_q = models.IntegerField()
 
@@ -157,7 +162,7 @@ class Exam(models.Model):
 
 class Attempt(models.Model):
     exam = models.ForeignKey(Exam, on_delete=models.PROTECT)
-    user = models.ForeignKey(user, on_delete=models.PROTECT)
+    user = models.ForeignKey(User, on_delete=models.PROTECT)
 
     def __str__(self):
         return f'exam id: {self.exam} preformed by user id: {self.user}'
@@ -165,7 +170,7 @@ class Attempt(models.Model):
 
 class Choice(models.Model):
     text = models.TextField()
-    question = models.ForeignKey('Question', on_delete=models.PROTECT, related_name="myQuestion")
+    question = models.ForeignKey('Question', on_delete=models.PROTECT, related_name="Question")
 
     def __str__(self):
         return self.text
@@ -174,7 +179,7 @@ class Choice(models.Model):
 class Question(models.Model):
     text = models.TextField()
     exam = models.ForeignKey(Exam, on_delete=models.PROTECT)
-    answer_choice = models.ForeignKey(Choice, on_delete=models.PROTECT, related_name="myChoice")
+    answer_choice = models.ForeignKey(Choice, on_delete=models.PROTECT, related_name="Choice")
 
     def __str__(self):
         return self.text
@@ -183,14 +188,14 @@ class Question(models.Model):
 class AttemptSolveQuestion(models.Model):
     attempt = models.ForeignKey(Attempt, on_delete=models.PROTECT)
     question = models.ForeignKey(Question, on_delete=models.PROTECT)
-    pickedChoice = models.ForeignKey(Choice, on_delete=models.PROTECT)
+    picked_choice = models.ForeignKey(Choice, on_delete=models.PROTECT)
 
     class Meta:
         unique_together = (('attempt', 'question', "pickedChoice"),)
 
     def __str__(self):
         return f'attempt id: {self.attempt} for question id: {self.question}' \
-               f'and picked choice id: {self.pickedChoice}'
+               f'and picked choice id: {self.picked_choice}'
 
 
 class Lesson(models.Model):
@@ -203,7 +208,7 @@ class Lesson(models.Model):
 
 
 class PDF(models.Model):
-    path = models.CharField(max_length=500)
+    path = models.URLField(max_length=200)
     name = models.CharField(max_length=100)
     lesson = models.ForeignKey(Lesson, on_delete=models.PROTECT)
 
@@ -212,7 +217,7 @@ class PDF(models.Model):
 
 
 class Media(models.Model):
-    path = models.CharField(max_length=500)
+    path = models.URLField(max_length=200)
     lesson = models.ForeignKey(Lesson, on_delete=models.PROTECT)
 
     def __str__(self):
