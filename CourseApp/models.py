@@ -78,24 +78,14 @@ class User(AbstractUser):
     source = models.CharField(max_length=50),
     info_complete = models.BooleanField(default=False),
     phone = models.CharField(max_length=20),
-    segment = models.ForeignKey(UserSegment, on_delete=models.PROTECT)
-    USERNAME_FIELD = phone
-    REQUIRED_FIELDS = [phone]
+    segment = models.ForeignKey(UserSegment, on_delete=models.PROTECT),
+    USERNAME_FIELD = phone,
+    REQUIRED_FIELDS = [phone],
+    courses = models.ManyToManyField(Course, through="UserJoinsCourse")
 
     def __str__(self):
         return f'{self.first_name} {self.last_name}, {self.gender} with age group: {self.age_group}, has phone: {self.phone} and his info is' \
                f'{"not" if self.info_complete == False else ""} completed'
-
-
-class Comment(models.Model):
-    date = models.DateTimeField(auto_now_add=True)
-    text = models.TextField()
-    user = models.ForeignKey(User, on_delete=models.PROTECT)
-    course = models.ForeignKey(Course, on_delete=models.PROTECT)
-
-    def __str__(self):
-        return f'user id: {self.user} made comment At {self.date} with text: {self.text} ' \
-               f'on the course with id: {self.course}'
 
 
 class Payment(models.Model):
@@ -110,13 +100,24 @@ class UserJoinsCourse(models.Model):
     user = models.ForeignKey(User, on_delete=models.PROTECT)
     course = models.ForeignKey(Course, on_delete=models.PROTECT)
     payment = models.ForeignKey(Payment, on_delete=models.PROTECT)
-    last_unlocked = models.DateTimeField(auto_now_add=True)
+    last_unlocked = models.IntegerField()
 
     class Meta:
         unique_together = (('user', 'course'),)
 
     def __str__(self):
         return self.last_unlocked
+
+
+class Comment(models.Model):
+    date = models.DateTimeField(auto_now_add=True)
+    text = models.TextField()
+    user = models.ForeignKey(User, on_delete=models.PROTECT)
+    course = models.ForeignKey(Course, on_delete=models.PROTECT)
+
+    def __str__(self):
+        return f'user id: {self.user} made comment At {self.date} with text: {self.text} ' \
+               f'on the course with id: {self.course}'
 
 
 class SurveyNote(models.Model):
@@ -155,6 +156,7 @@ class Survey(models.Model):
 
 class Exam(models.Model):
     num_q = models.IntegerField()
+    online_coruse = models.ForeignKey(OnlineCourse,on_delete=models.PROTECT)
 
     def __str__(self):
         return f'exam with num_q = {self.num_q}'
