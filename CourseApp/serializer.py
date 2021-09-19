@@ -23,17 +23,31 @@ class CourseSerializer(serializers.ModelSerializer):
         model = Course
         fields = '__all__'
 
-    def to_representation(self, obj):
-        representation = super().to_representation(obj)
-        if obj.course_type == 1:
-            online_course = OnlineCourse.objects.get(course_id=obj.id)
-            representation['online'] = OnlineCourseSerializer(online_course).data
-            return representation
-        else:
-            offline_course = OfflineCourse.objects.get(course_id=obj.id)
-            representation['offline'] = OfflineCourseSerializer(offline_course).data
+    online = serializers.SerializerMethodField()
+    offline = serializers.SerializerMethodField()
 
-            return representation
+    def get_online(self, obj: Course):
+        if obj.course_type == Course.ONLINE:
+            return OnlineCourseSerializer(obj.online).data
+        return None
+
+    def get_offline(self, obj: Course):
+        if obj.course_type == Course.OFFLINE:
+            return OfflineCourseSerializer(obj.offline).data
+        return None
+
+    # def to_representation(self, obj):
+    #     representation = super().to_representation(obj)
+    #     if obj.course_type == 1:
+    #         online_course = OnlineCourse.objects.get(course_id=obj.id)
+    #         representation['online'] = OnlineCourseSerializer(online_course).data
+    #         return representation
+    #     else:
+    #         offline_course = OfflineCourse.objects.get(course_id=obj.id)
+    #         representation['offline'] = OfflineCourseSerializer(offline_course).data
+    #
+    #         return representation
+
 
     # online_info = serializers.SerializerMethodField('get_online_info')
     #
@@ -46,6 +60,7 @@ class CourseSerializer(serializers.ModelSerializer):
     # def get_offline_info(self, obj):
     #     offline_course = OfflineCourse.objects.get(course_id=obj.id)
     #     return OfflineCourseSerializer(offline_course).data
+
 
     # course_info = serializers.SerializerMethodField()
     #
