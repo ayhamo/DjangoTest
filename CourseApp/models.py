@@ -1,3 +1,4 @@
+from django.contrib.auth.base_user import BaseUserManager
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
@@ -22,15 +23,23 @@ class Category(models.Model):
 
 class Course(models.Model):
     name = models.CharField(max_length=30)
-    course_type = models.CharField(max_length=8)
     category = models.ForeignKey(Category, on_delete=models.PROTECT)
+    raters = models.FloatField(default=1)
+    rating = models.IntegerField(default=1)
+    OFFLINE = 0
+    ONLINE = 1
+    COURSE_TYPE_CHOICES = [(ONLINE, 'Online'), (OFFLINE, 'Offline')]
+    course_type = models.IntegerField(choices=COURSE_TYPE_CHOICES)
 
     def __str__(self):
         return f"{self.name} with type {self.course_type}"
 
+    def get_type(self):
+        return self.course_type
+
 
 class OfflineCourse(models.Model):
-    Course = models.ForeignKey(Course, on_delete=models.PROTECT, primary_key=True)
+    course = models.OneToOneField(Course, on_delete=models.PROTECT, primary_key=True, related_name="offline", default=1)
     e_time = models.TimeField()
     b_time = models.TimeField()
     e_date = models.DateField()
@@ -43,9 +52,7 @@ class OfflineCourse(models.Model):
 
 
 class OnlineCourse(models.Model):
-    Course = models.ForeignKey(Course, on_delete=models.PROTECT, primary_key=True)
-    raters = models.FloatField()
-    rating = models.IntegerField()
+    course = models.OneToOneField(Course, on_delete=models.PROTECT, primary_key=True, related_name="online", default=1)
     type = models.CharField(max_length=30)
     duration = models.CharField(max_length=50)
     lessons_count = models.IntegerField()
@@ -65,32 +72,44 @@ class UserSegment(models.Model):
 
 
 class User(AbstractUser):
+    phone = models.CharField(max_length=20, unique=True)
+
+    uid = models.CharField(max_length=50)
+    source = models.CharField(max_length=50, null=True)
+    info_complete = models.BooleanField(default=False)
+    token = models.CharField(max_length=15, null=True)
     GENDER_CHOICES = [(0, 'Male'), (1, 'Female')]
-    username = None
-    password = None
-    first_name = models.CharField(max_length=50),
-    second_name = models.CharField(max_length=50),
-    last_name = models.CharField(max_length=50),
-    gender = models.IntegerField(choices=GENDER_CHOICES)
-    age_group = models.CharField(max_length=50)
-    token = models.CharField(max_length=15),
-    level = models.IntegerField(),
-    source = models.CharField(max_length=50),
-    info_complete = models.BooleanField(default=False),
-    phone = models.CharField(max_length=20),
-    segment = models.ForeignKey(UserSegment, on_delete=models.PROTECT),
-    USERNAME_FIELD = phone,
-    REQUIRED_FIELDS = [phone],
+
+    first_name = models.CharField(max_length=50, null=True)
+    second_name = models.CharField(max_length=50, null=True)
+    last_name = models.CharField(max_length=50, null=True)
+
+    gender = models.IntegerField(choices=GENDER_CHOICES, null=True)
+    age_group = models.CharField(max_length=50, null=True)
+    level = models.IntegerField(null=True)
+
+    segment = models.ForeignKey(UserSegment, on_delete=models.PROTECT, null=True)
+    USERNAME_FIELD = 'phone'
+    REQUIRED_FIELDS = []
     courses = models.ManyToManyField(Course, through="UserJoinsCourse")
+
+    username = models.CharField(
+        'username',
+        default="noUsername",
+        max_length=150,
+        unique=False,
+        null=True,
+        blank=True,
+        help_text='Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.',
+    )
 
     def __str__(self):
         return f'{self.first_name} {self.last_name}, {self.gender} with age group: {self.age_group}, has phone: {self.phone} and his info is' \
-               f'{"not" if self.info_complete == False else ""} completed'
+               f'{" not" if self.info_complete == False else ""} completed'
 
 
 class Payment(models.Model):
     amount = models.FloatField()
-    user = models.ForeignKey(User, on_delete=models.PROTECT)
 
     def __str__(self):
         return self.amount
@@ -156,7 +175,7 @@ class Survey(models.Model):
 
 class Exam(models.Model):
     num_q = models.IntegerField()
-    online_coruse = models.ForeignKey(OnlineCourse,on_delete=models.PROTECT)
+    online_coruse = models.ForeignKey(OnlineCourse, on_delete=models.PROTECT)
 
     def __str__(self):
         return f'exam with num_q = {self.num_q}'
@@ -193,7 +212,7 @@ class AttemptSolveQuestion(models.Model):
     picked_choice = models.ForeignKey(Choice, on_delete=models.PROTECT)
 
     class Meta:
-        unique_together = (('attempt', 'question', "pickedChoice"),)
+        unique_together = (('attempt', 'question', "picked_choice"),)
 
     def __str__(self):
         return f'attempt id: {self.attempt} for question id: {self.question}' \
