@@ -1,9 +1,8 @@
 from rest_framework import generics
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
 
 from .models import *
 from .serializer import *
+from .filters import *
 
 
 class CourseInfo(generics.ListCreateAPIView):
@@ -19,7 +18,23 @@ class CourseInfo(generics.ListCreateAPIView):
 #
 #     return Response(courses)
 
-
-class OnlineCourseInfo(generics.ListCreateAPIView):
+class FilteredCourses(generics.ListCreateAPIView):
+    model = Course
     queryset = Course.objects.all()
-    serializer_class = OnlineCourseSerializer
+    serializer_class = CourseSerializer
+    filter_backends = (filters.DjangoFilterBackend,)
+    filterset_class = CourseFilter
+
+# class FilteredCourses(ListView):
+#     model = Course
+#     template_name = 'courseApp/course_list.html'
+#
+#     def get_context_data(self, **kwargs):
+#         context = super().get_context_data(**kwargs)
+#         context['filter'] = CourseFilter(self.request.GET, queryset=self.get_queryset())
+#         return context
+
+
+# class DetailedCourseInfo(generics.):
+#     model = Course
+#     template_name = 'courseApp/course_detail.html'

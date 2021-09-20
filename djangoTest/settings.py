@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'example_api',
     'CourseApp',
+    'django_filters',
+    'bootstrapform',
 ]
 
 MIDDLEWARE = [

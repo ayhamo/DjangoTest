@@ -1,0 +1,21 @@
+{% extends 'courseApp/base.html' %}
+{% load bootstrap %}
+{% block content %}
+    <div class="container">
+
+        <from method="GET">
+            {{ filter.form|bootstrap }}
+            <button type="submit" class="btn btn-primary">Search</button>
+        </from>
+
+
+        <ul>
+            {% for course in filter.qs %}
+                <li>
+                    <a href="{% url 'CourseApp:course_detail' course.id %}">{{ course.name }}</a>
+                </li>
+
+            {% endfor %}
+        </ul>
+    </div>
+{% endblock content %}

@@ -26,6 +26,7 @@ class Course(models.Model):
     category = models.ForeignKey(Category, on_delete=models.PROTECT)
     raters = models.FloatField(default=1)
     rating = models.IntegerField(default=1)
+    price = models.FloatField(default=0)
     OFFLINE = 0
     ONLINE = 1
     COURSE_TYPE_CHOICES = [(ONLINE, 'Online'), (OFFLINE, 'Offline')]
@@ -34,8 +35,8 @@ class Course(models.Model):
     def __str__(self):
         return f"{self.name} with type {self.course_type}"
 
-    def get_type(self):
-        return self.course_type
+    class Meta:
+        ordering = ['-id']
 
 
 class OfflineCourse(models.Model):
@@ -59,8 +60,7 @@ class OnlineCourse(models.Model):
 
     def __str__(self):
         return f"Course type: {self.type} with duration(in seconds): " \
-               f"{self.duration}s and has {self.lessons_count} lessons" \
-               f"and {self.raters} have rated it."
+               f"{self.duration}s and has {self.lessons_count} lessons"
 
 
 class UserSegment(models.Model):
